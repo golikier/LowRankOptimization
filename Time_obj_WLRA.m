@@ -1,5 +1,5 @@
 %% Running time on a weighted low-rank approximation (WLRA) problem
-% Author: Guillaume Olikier (2025-06-13)
+% Author: Guillaume Olikier (2025-06-30)
 % This script computes, for N randomly generated instances of a WLRA
 % problem, the time needed by each of the following methods to bring the
 % objective function below f_tol:
@@ -23,6 +23,12 @@ B = zeros(N, 7);
 sigma_r = zeros(N, 7);
 orthU = zeros(N, 6);
 orthV = zeros(N, 6);
+i_apo = 1e4;
+i_ZeroSingularValue = zeros(N, 1);
+S_apo = cell([N i_apo]);
+s_apo = cell([N i_apo]);
+U_apo = cell([N i_apo]);
+V_apo = cell([N i_apo]);
 s_PGD = cell([N 1]);
 U_PGD = cell([N 1]);
 V_PGD = cell([N 1]);
@@ -80,6 +86,21 @@ for i = 1:N
     f2 = @(X, dX) W{i}.*dX;
     g0 = @(L, R) f0(L*R');
     g1 = @(L, R) f1(L*R');
+    %% P2GD and RFD iterates based on [OGA25, Proposition 8.1]
+    S_apo{i, 1} = diag(s0(i, :));
+    s_apo{i, 1} = s0(i, :);
+    U_apo{i, 1} = U(:, 1:r);
+    V_apo{i, 1} = V(:, 1:r);
+    j = 1;
+    while s_apo{i, j}(r) > 0 && j < i_apo
+        j = j+1;
+        S_apo{i, j} = blkdiag(diag(((diag(ones(r_)-a*W{i}(1:r_, 1:r_))').^(j-1)).*s0(i, 1:r_)), (ones(r-r_)-a*W{i}(r_+1:r, r_+1:r)).^(j-1).*(diag(s0(i, r_+1:r))-a2{i})+a2{i});
+        [U_hat, s_apo{i, j}, V_hat] = svd(S_apo{i, j});
+        s_apo{i, j} = diag(s_apo{i, j})';
+        U_apo{i, j} = U(:, 1:r)*U_hat;
+        V_apo{i, j} = V(:, 1:r)*V_hat;
+    end
+    i_ZeroSingularValue(i) = j;
     %% Running time
     % PGD
     [s_PGD{i}, U_PGD{i}, V_PGD{i}, obj(i, 1), time(i, 1)] = PGDtime(r, s0(i, :), U0, V0, f0, f1, a, b, c, f_tol);
