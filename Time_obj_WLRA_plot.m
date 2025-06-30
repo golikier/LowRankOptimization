@@ -1,5 +1,5 @@
 %% Plots on a weighted low-rank approximation problem
-% Author: Guillaume Olikier (2025-06-13)
+% Author: Guillaume Olikier (2025-06-30)
 % This script plots, for each of the following methods applied to a
 % weighted low-rank approximation problem, the objective function and a
 % B-stationarity measure as functions of the running time until a function
@@ -12,8 +12,8 @@
 %   - RFDR [OA23, Algorithm 3];
 %   - HRTR [LKB23, Algorithm 1].
 load('WLRA_time_obj_data_randn.mat')
-%i = 18; % minimum running time of HRTR among the 50 instances
-i = 44; % minimum running time of HRTR among the 14 instances on which P2GD fails
+i = 18; % minimum running time of HRTR among the 50 instances
+%i = 44; % minimum running time of HRTR among the 14 instances on which P2GD fails
 sqrt_s0 = sqrt(s0(i, :));
 L0 = U0.*sqrt_s0;
 R0 = V0.*sqrt_s0;
@@ -33,21 +33,21 @@ g1 = @(L, R) f1(L*R');
 % [~, ~, ~, ~, time_RFDR, i_RFDR] = ERFDRtime(r, s0(i, :), U0, V0, g0, g1, a, b, c, 0, Delta, f_tol);
 % [~, ~, ~, time_HRTR, i_HRTR] = HRTRtime(L0, R0, f0, f1, f2, gamma, gamma_c, eta, f_tol);
 % Instance 18
-% i_PGD = 233;
-% i_P2GD = 1238;
-% i_RFD = 264549;
-% i_P2GDR = 233;
-% i_P2GDPGD = 233;
-% i_RFDR = 233;
-% i_HRTR = 120;
+i_PGD = 233;
+i_P2GD = 1238;
+i_RFD = 264549;
+i_P2GDR = 233;
+i_P2GDPGD = 233;
+i_RFDR = 233;
+i_HRTR = 120;
 % Instance 44
-i_PGD = 663;
-i_P2GD = 322850;
-i_RFD = 524827;
-i_P2GDR = 697;
-i_P2GDPGD = 695;
-i_RFDR = 733;
-i_HRTR = 356;
+% i_PGD = 663;
+% i_P2GD = 322850;
+% i_RFD = 524827;
+% i_P2GDR = 697;
+% i_P2GDPGD = 695;
+% i_RFDR = 733;
+% i_HRTR = 356;
 %% Iterates, function values, and running times
 [s_PGD, U_PGD, V_PGD, f_PGD, time_PGD] = PGDiterinfo(r, s0(i, :), U0, V0, f0, f1, a, b, c, i_PGD);
 [s_P2GD, U_P2GD, V_P2GD, f_P2GD, time_P2GD] = P2GDiterinfo(r, s0(i, :), U0, V0, g0, g1, a, b, c, i_P2GD);
@@ -92,6 +92,23 @@ for i = 1:i_HRTR+1
     U_HRTR = U_HRTR(:, 1:r_HRTR);
     V_HRTR = V_HRTR(:, 1:r_HRTR);
     [~, ~, ~, ~, B_HRTR(i)] = P2GDmap(r, r_HRTR, s_HRTR, U_HRTR, V_HRTR, g0, g1, a, b, c);
+end
+%% P2GD and RFD iterates based on [OGA25, Proposition 8.1]
+%j_max = 1160; % instance 18
+j_max = i_ZeroSingularValue(i); % instance 44
+X_diff_P2GD = zeros(j_max, 1);
+X_diff_RFD = zeros(j_max, 1);
+sigma_diff_P2GD = zeros(j_max, 1);
+sigma_diff_RFD = zeros(j_max, 1);
+sigma_r_diff_P2GD = zeros(j_max, 1);
+sigma_r_diff_RFD = zeros(j_max, 1);
+for j = 1:j_max
+    X_diff_P2GD(j) = norm((U_P2GD{j}.*s_P2GD{j})*V_P2GD{j}'-U(:, 1:r)*S_apo{i, j}*V(:, 1:r)', 'fro');
+    X_diff_RFD(j) = norm((U_RFD{j}.*s_RFD{j})*V_RFD{j}'-U(:, 1:r)*S_apo{i, j}*V(:, 1:r)', 'fro');
+    sigma_diff_P2GD(j) = norm(s_P2GD{j}-s_apo{i, j}, 'fro');
+    sigma_diff_RFD(j) = norm(s_RFD{j}-s_apo{i, j}, 'fro');
+    sigma_r_diff_P2GD(j) = abs(s_P2GD{j}(r)-s_apo{i, j}(r));
+    sigma_r_diff_RFD(j) = abs(s_RFD{j}(r)-s_apo{i, j}(r));
 end
 %% Plot objective function and B-stationarity measure as functions of time
 figure
@@ -146,4 +163,32 @@ ylim([0 15])
 yticks(3*(0:5))
 xlabel('i');
 legend('log_{10}(i+1)', 'log_{10}(k_i)', 'location', 'northwest');
+set(gca, 'FontSize', 11);
+%% Plot distance between empirically and analytically computed P2GD or RFD iterates
+figure
+box
+hold on
+plot(log10(X_diff_P2GD), 'b.-')
+plot(log10(X_diff_RFD), 'g.-')
+xlabel('i');
+ylabel('log_{10}(||X_i^{empirical}-X_i^{analytical}||)');
+legend('P2GD', 'RFD', 'location', 'east');
+set(gca, 'FontSize', 11);
+figure
+box
+hold on
+plot(log10(sigma_diff_P2GD), 'b.-')
+plot(log10(sigma_diff_RFD), 'g.-')
+xlabel('i');
+ylabel('log_{10}(||\Sigma_i^{empirical}-\Sigma_i^{analytical}||)');
+legend('P2GD', 'RFD', 'location', 'east');
+set(gca, 'FontSize', 11);
+figure
+box
+hold on
+plot(log10(sigma_r_diff_P2GD), 'b.-')
+plot(log10(sigma_r_diff_RFD), 'g.-')
+xlabel('i');
+ylabel('log_{10}(|\sigma_{r, i}^{empirical}-\sigma_{r, i}^{analytical}|)');
+legend('P2GD', 'RFD', 'location', 'east');
 set(gca, 'FontSize', 11);
