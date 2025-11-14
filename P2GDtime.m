@@ -1,6 +1,6 @@
-function [s, U, V, f, time] = P2GDtime(r, s, U, V, g0, g1, a, b, c, f_tol)
+function [s, U, V, f, time, i] = P2GDtime(r, s, U, V, g0, g1, a, b, c, f_tol)
 %% Description
-% Author: Guillaume Olikier (2025-06-13)
+% Author: Guillaume Olikier (2025-10-12)
 % This function implements P2GD [SU15, Algorithm 3].
 % Input:
 %   - a positive integer r;
@@ -16,13 +16,16 @@ function [s, U, V, f, time] = P2GDtime(r, s, U, V, g0, g1, a, b, c, f_tol)
 % Output:
 %   - the first (s, U, V) such that g0(U.*s, V) <= f_tol;
 %   - the value f of g0 at (U.*s, V);
-%   - the running time required by P2GD to generate (s, U, V).
+%   - the running time required to generate (s, U, V);
+%   - the number of iterations required to generate (s, U, V).
 % The method is stopped if its running time exceeds 60 seconds.
 % This function computes only what is necessary to generate (s, U, V).
 tic
 f = g0(U.*s, V);
+i = 0;
 while f > f_tol && toc <= 60
     [s, U, V, f, ~] = P2GDmap(r, length(s), s, U, V, g0, g1, a, b, c);
+    i = i+1;
 end
 time = toc;
 end
