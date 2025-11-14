@@ -1,6 +1,6 @@
-function [s, U, V, f, time] = ERFDtime(r, s, U, V, g0, g1, a, b, c, subclass, f_tol)
+function [s, U, V, f, time, i] = ERFDtime(r, s, U, V, g0, g1, a, b, c, subclass, f_tol)
 %% Description
-% Author: Guillaume Olikier (2025-06-13)
+% Author: Guillaume Olikier (2025-10-12)
 % This function implements four subclasses of ERFD, whose iteration map is
 % [OA24, Algorithm 3.1]:
 %   - RFD if subclass = 0;
@@ -21,15 +21,18 @@ function [s, U, V, f, time] = ERFDtime(r, s, U, V, g0, g1, a, b, c, subclass, f_
 % Output:
 %   - the first (s, U, V) such that g0(U.*s, V) <= f_tol;
 %   - the value f of g0 at (U.*s, V);
-%   - the running time required by ERFD to generate (s, U, V).
+%   - the running time required to generate (s, U, V);
+%   - the number of iterations required to generate (s, U, V).
 % The method is stopped if its running time exceeds 60 seconds.
 % This function computes only what is necessary to generate (s, U, V).
 tic
 [m, ~] = size(U);
 [n, ~] = size(V);
 f = g0(U.*s, V);
+i = 0;
 while f > f_tol && toc <= 60
     [s, U, V, f] = ERFDmap(m, n, r, length(s), s, U, V, g0, g1, a, b, c, subclass);
+    i = i+1;
 end
 time = toc;
 end
