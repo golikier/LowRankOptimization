@@ -1,6 +1,6 @@
-function [L, R, f, time] = HRTRtime(L, R, f0, f1, f2, gamma, gamma_c, eta, f_tol)
+function [L, R, f, time, i] = HRTRtime(L, R, f0, f1, f2, gamma, gamma_c, eta, f_tol)
 %% Description
-% Author: Guillaume Olikier (2025-06-13)
+% Author: Guillaume Olikier (2025-11-12)
 % This function implements HRTR [LKB23, Algorithm 1] with the first lift
 % phi of [LKB23, (1.1)], namely phi(L, R) := L*R', the hook from
 % [LKB23, Example 3.11], and the Cauchy step.
@@ -16,7 +16,8 @@ function [L, R, f, time] = HRTRtime(L, R, f0, f1, f2, gamma, gamma_c, eta, f_tol
 % Output:
 %   - the first (L, R) such that f0(L*R') <= f_tol;
 %   - the value f of f0 at L*R';
-%   - the running time required by HRTR to generate (L, R).
+%   - the running time required to generate (L, R);
+%   - the number of iterations required to generate (L, R).
 % This function computes only what is necessary to generate L and R.
 g = @(L, R) f0(L*R');
 g_1_1 = @(L, R) f1(L*R')*R;
@@ -30,7 +31,8 @@ dim2 = n*r;
 dim = dim1+dim2;
 tic
 f = g(L, R);
-while f > f_tol
+i = 0;
+while f > f_tol && toc < 1800
     G_1_1 = g_1_1(L, R);
     G_1_2 = g_1_2(L, R);
     SquaredNormGrad = norm(G_1_1, 'fro')^2+norm(G_1_2, 'fro')^2;
@@ -85,7 +87,7 @@ while f > f_tol
         f_new = g(L_new, R_new);
         rho = (f-f_new)/decreaseModel;
     end
-    while rho < eta
+    while rho < eta && toc < 1800
         delta = gamma_c*delta;
         t = delta/normU;
         if a > 0
@@ -109,6 +111,7 @@ while f > f_tol
     U = U_L*U;
     L = U.*s;
     R = V.*s;
+    i = i+1;
 end
 time = toc;
 end
