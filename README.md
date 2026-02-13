@@ -9,7 +9,7 @@ This repository contains Matlab implementations of the following low-rank optimi
 - four classes of ERFDR [OA24, Algorithm 4.2], namely RFDR [OA23, Algorithm 3] and CRFDR [OA24, Definition 6.3] with each of the three cones from [OA24, Table 6.1];
 - HRTR [LKB23, Algorithm 1].
 
-It also contains Matlab code enabling to check the Hessian and the Matlab scripts used to realize the numerical experiments presented in [OGA26, sections 8.3 and 8.4], which compare monotone PGD, P2GD, P2GDR, P2GD-PGD, RFD, and RFDR on two weighted low-rank approximation (WLRA) problems.
+It also contains Matlab code to check the Hessian and the Matlab scripts used to realize the numerical experiments presented in [OGA26, sections 8.3 and 8.4], which compare monotone PGD, P2GD, P2GDR, P2GD-PGD, RFD, and RFDR on two weighted low-rank approximation (WLRA) problems.
 
 Every Matlab function implements:
 - the iteration map if its name contains “map”;
